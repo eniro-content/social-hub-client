@@ -6,10 +6,11 @@ import com.eniro.content.social.client.constants.Source;
 import com.eniro.content.social.client.model.EcoSocialData;
 import com.eniro.content.social.client.model.SocialData;
 import com.eniro.content.social.client.util.JsonUtil;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.*;
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
@@ -21,10 +22,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
-import org.w3c.dom.Entity;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.logging.Logger;
@@ -35,6 +34,11 @@ import java.util.logging.Logger;
  */
 public class SocialhubClient {
     private static final Logger LOGGER = Logger.getLogger(SocialhubClient.class.getCanonicalName());
+    public static final String SEPARATOR = ",";
+    public static final String ENIRO_CALLER = "EniroCaller";
+    public static final String DEFAULT_USER_AGENT = "socialhub-client-java";
+    public static final String PARAM_QUERY = "query";
+    public static final String PARAM_ACTION = "action";
     private final String auth;
     private final String host;
     private final String caller;
@@ -65,8 +69,8 @@ public class SocialhubClient {
     private Collection<Header> getDefaultHeaders() {
         Collection<Header> toReturn = new HashSet<Header>();
         toReturn.add(new BasicHeader(HttpHeaders.AUTHORIZATION, auth));
-        toReturn.add(new BasicHeader("EniroCaller", caller));
-        toReturn.add(new BasicHeader(HttpHeaders.USER_AGENT, "socialhub-client-java"));
+        toReturn.add(new BasicHeader(ENIRO_CALLER, caller));
+        toReturn.add(new BasicHeader(HttpHeaders.USER_AGENT, DEFAULT_USER_AGENT));
         return toReturn;
     }
 
@@ -78,10 +82,10 @@ public class SocialhubClient {
         try {
             URIBuilder uri = new URIBuilder().setPath(buildUri(country, ecoId, source));
             if (!StringUtils.isEmpty(query)) {
-                uri.addParameter("query", query);
+                uri.addParameter(PARAM_QUERY, query);
             }
             if (action != null) {
-                uri.addParameter("action", action.name());
+                uri.addParameter(PARAM_ACTION, action.name());
             }
             HttpResponse result = client.execute(new HttpGet(uri.build()));
             if (result.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -109,10 +113,10 @@ public class SocialhubClient {
         try {
             URIBuilder uri = new URIBuilder().setPath(buildUri(country, ecoId, source));
             if (!StringUtils.isEmpty(query)) {
-                uri.addParameter("query", query);
+                uri.addParameter(PARAM_QUERY, query);
             }
             if (action != null) {
-                uri.addParameter("action", action.name());
+                uri.addParameter(PARAM_ACTION, action.name());
             }
             HttpResponse result = client.execute(new HttpGet(uri.build()));
             if (result.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -180,7 +184,7 @@ public class SocialhubClient {
     }
 
     private String buildUri(Country country, Collection<Long> ecoIds, Collection<Source> sources) {
-        return String.format(URI_FORMAT, host, country, StringUtils.join(ecoIds, ","), StringUtils.join(sources, ","));
+        return String.format(URI_FORMAT, host, country, StringUtils.join(ecoIds, SEPARATOR), StringUtils.join(sources, SEPARATOR));
     }
 
     private String buildUri(Country country, Long ecoId, Source source) {
